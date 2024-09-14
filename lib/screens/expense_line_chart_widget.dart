@@ -1,4 +1,6 @@
 // expense_line_chart_widget.dart
+// ignore_for_file: use_key_in_widget_constructors
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 

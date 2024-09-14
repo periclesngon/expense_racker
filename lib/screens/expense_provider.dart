@@ -5,34 +5,17 @@ import 'expense.dart';  // Make sure this model is defined in your project
 
 class ExpenseProvider with ChangeNotifier {
   final List<Expense> _expenses = [];
-  double? _dailyBudget;   // User can set this
-  double? _weeklyBudget;  // User can set this
-  double? _monthlyBudget; // User can set this
-  List<double> _weeklyExpenses = List<double>.filled(7, 0.0);  // Fixed declaration for weekly expenses
+  double _monthlyBudget = 2400.0;  // Default budget, can be changed
 
   List<Expense> get expenses => _expenses;
 
-  // Getter and setter for daily, weekly, and monthly budgets
-  double? get dailyBudget => _dailyBudget;
-  set dailyBudget(double? value) {
-    _dailyBudget = value;
-    notifyListeners();
-  }
-
-  double? get weeklyBudget => _weeklyBudget;
-  set weeklyBudget(double? value) {
-    _weeklyBudget = value;
-    notifyListeners();
-  }
-
-  double? get monthlyBudget => _monthlyBudget;
-  set monthlyBudget(double? value) {
+  double get monthlyBudget => _monthlyBudget;
+  
+  get weeklyExpenses => null;
+  set monthlyBudget(double value) {
     _monthlyBudget = value;
     notifyListeners();
   }
-
-  // Getter for weekly expenses
-  List<double> get weeklyExpenses => _weeklyExpenses;
 
   double totalSpentThisWeek() {
     DateTime now = DateTime.now();
@@ -47,16 +30,13 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   double spentPercentage() {
-    if (_monthlyBudget != null && _monthlyBudget! > 0) {
-      return spentThisMonth() / _monthlyBudget!;
-    }
-    return 0.0;
+    return (monthlyBudget > 0) ? spentThisMonth() / monthlyBudget : 0;
   }
 
   bool isThisWeek(DateTime date) {
     DateTime now = DateTime.now();
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
+    DateTime endOfWeek = startOfWeek.add(Duration(days: 6));
     return date.isAfter(startOfWeek) && date.isBefore(endOfWeek);
   }
 
@@ -65,7 +45,8 @@ class ExpenseProvider with ChangeNotifier {
     Map<String, double> dailyExpenses = {};
     DateTime now = DateTime.now();
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-
+    startOfWeek.add(const Duration(days: 6));
+    
     for (var i = 0; i < 7; i++) {
       DateTime day = startOfWeek.add(Duration(days: i));
       double total = _expenses.where((expense) => 
@@ -81,9 +62,7 @@ class ExpenseProvider with ChangeNotifier {
     Map<String, double> dailyExpenses = calculateDailyExpenses();
     return dailyExpenses.keys.toList().asMap().entries.map((entry) {
       int idx = entry.key;
-     double total = double.parse(entry.value);
-
-
+      double total = double.parse(entry.value);
       return BarChartGroupData(
         x: idx,
         barRods: [BarChartRodData(toY: total, color: Colors.blueAccent)],
@@ -92,31 +71,31 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   void calculateWeeklyExpenses() {
-    DateTime now = DateTime.now();
-    int weekday = now.weekday;
+  DateTime now = DateTime.now();
+  int weekday = now.weekday;
 
-    // Start from the beginning of the week (assuming Monday as the first day of the week)
-    DateTime startOfWeek = now.subtract(Duration(days: weekday - 1));
+  // Start from the beginning of the week (assuming Monday is the first day)
+  DateTime startOfWeek = now.subtract(Duration(days: weekday - 1));
 
-    // Reset weeklyExpenses to 0 for each day
-    _weeklyExpenses = List<double>.filled(7, 0.0);
+  // Reset weeklyExpenses to 0 for each day
+  List<double> _weeklyExpenses = List<double>.filled(7, 0.0);
 
-    for (var expense in _expenses) {
-      // Check if the expense is from the current week
-      if (expense.date.isAfter(startOfWeek) || 
-          (expense.date.year == startOfWeek.year && expense.date.month == startOfWeek.month && expense.date.day == startOfWeek.day)) {
-        
-        // Calculate which day of the week this expense belongs to
-        int dayDifference = expense.date.difference(startOfWeek).inDays;
-        
-        if (dayDifference >= 0 && dayDifference < 7) {
-          _weeklyExpenses[dayDifference] += expense.amount;
-        }
+  for (var expense in _expenses) {
+    if (expense.date.isAfter(startOfWeek) || (expense.date.year == startOfWeek.year &&
+        expense.date.month == startOfWeek.month &&
+        expense.date.day == startOfWeek.day)) {
+
+      int dayDifference = expense.date.difference(startOfWeek).inDays;
+
+      if (dayDifference >= 0 && dayDifference < 7) {
+        _weeklyExpenses[dayDifference] += expense.amount;
       }
     }
-
-    notifyListeners();
   }
+
+  notifyListeners();
+}
+
 
   void addExpense(Expense expense) {
     _expenses.add(expense);
@@ -124,7 +103,10 @@ class ExpenseProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  double getMaxExpense() {
-    return _weeklyExpenses.reduce((value, element) => value > element ? value : element);
+  void editMonthlyBudget(double newBudget) {
+    monthlyBudget = newBudget;
+    notifyListeners();
   }
+
+  getMaxExpense() {}
 }

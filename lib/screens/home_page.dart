@@ -1,4 +1,6 @@
 // home_screen.dart
+// ignore_for_file: unnecessary_string_escapes
+
 import 'package:expence_app/screens/expense_provider.dart';
 import 'package:expence_app/screens/expenses_graph_widget.dart';
 import 'package:expence_app/screens/transaction.dart';
@@ -29,7 +31,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("\F CFA${expenseProvider.totalSpentThisWeek()}", // Using provider data
+                Text("F CFA${expenseProvider.totalSpentThisWeek()}", // Using provider data
                     style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                 const Text("Total spent this week"),
                 const SizedBox(height: 200, child: ExpenseGraphWidget()), // Assuming this shows a graph of expenses
@@ -42,7 +44,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Text("Budget for this month: \F CFA${expenseProvider.monthlyBudget}", 
                     style: const TextStyle(fontSize: 18)),
-                Text("Spent: \F CFA${expenseProvider.spentThisMonth()} of \F CFA${expenseProvider.monthlyBudget}"),
+                Text("Spent: F CFA${expenseProvider.spentThisMonth()} of \F CFA${expenseProvider.monthlyBudget}"),
                 const SizedBox(height: 10),
                 LinearProgressIndicator(value: expenseProvider.spentPercentage()), // Progress bar for spending
               ],
@@ -50,6 +52,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+      
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddExpenseScreen()));
@@ -74,7 +77,7 @@ class HomeScreen extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.list),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => TransactionSummaryScreen()));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TransactionSummaryScreen()));
                 // Navigate to the Transactions Screen
               },
             ),

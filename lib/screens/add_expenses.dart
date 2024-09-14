@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   @override
+  // ignore: library_private_types_in_public_api
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
 
