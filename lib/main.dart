@@ -1,4 +1,6 @@
 // main.dart
+import 'package:expence_app/screens/budget_screen.dart';
+import 'package:expence_app/screens/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/expense_provider.dart'; // Path to your provider
@@ -8,7 +10,8 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ExpenseProvider()), // Providing the ExpenseProvider
+        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+         ChangeNotifierProvider(create: (_) => ThemeProvider(ThemeData.light())), // Default to light theme // Providing the ExpenseProvider
       ],
       child: MyApp(),
     ),
@@ -23,7 +26,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomeScreen(),
+      home: const Budgetsetter(),
       
       debugShowCheckedModeBanner: false,
     );

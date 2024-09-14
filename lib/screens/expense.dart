@@ -14,4 +14,6 @@ class Expense {
     required this.category,
     required this.date,
   });
+
+  DateTime? get import => null;
 }

@@ -1,27 +1,30 @@
 // home_screen.dart
 // ignore_for_file: unnecessary_string_escapes
 
+import 'package:expence_app/screens/budget_screen.dart';
 import 'package:expence_app/screens/expense_provider.dart';
 import 'package:expence_app/screens/expenses_graph_widget.dart';
 import 'package:expence_app/screens/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:expence_app/screens/add_expenses.dart';
- // Assuming you have this widget in the widgets folder
+import 'theme_provider.dart'; // Make sure to import the ThemeProvider
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Accessing the expense provider data
     final expenseProvider = Provider.of<ExpenseProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Overview'),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => _showThemeDialog(context),
+          ),
         ],
       ),
       body: Column(
@@ -31,10 +34,10 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("F CFA${expenseProvider.totalSpentThisWeek()}", // Using provider data
+                Text("F CFA${expenseProvider.totalSpentThisWeek()}",
                     style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                 const Text("Total spent this week"),
-                const SizedBox(height: 200, child: ExpenseGraphWidget()), // Assuming this shows a graph of expenses
+                const SizedBox(height: 200, child: ExpenseGraphWidget()),
               ],
             ),
           ),
@@ -42,21 +45,26 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                Text("Budget for this month: \F CFA${expenseProvider.monthlyBudget}", 
+                Text("Budget for this month: F CFA${expenseProvider.monthlyBudget}",
                     style: const TextStyle(fontSize: 18)),
-                Text("Spent: F CFA${expenseProvider.spentThisMonth()} of \F CFA${expenseProvider.monthlyBudget}"),
+                Text("Spent: F CFA${expenseProvider.spentThisMonth()} of F CFA${expenseProvider.monthlyBudget}"),
                 const SizedBox(height: 10),
-                LinearProgressIndicator(value: expenseProvider.spentPercentage()), // Progress bar for spending
+                LinearProgressIndicator(value: expenseProvider.spentPercentage()),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) =>const Budgetsetter()));
+                  },
+                  child: const Text('Modify Budget'),
+                ),
               ],
             ),
           ),
         ],
       ),
-      
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddExpenseScreen()));
-          // Open new expense screen
         },
         child: const Icon(Icons.add),
       ),
@@ -68,30 +76,16 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             IconButton(
-              icon: const Icon(Icons.home),
-              onPressed: () {
-                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => const HomeScreen()));
-                // Navigate to the Home Screen
-              },
-            ),
-            IconButton(
               icon: const Icon(Icons.list),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TransactionSummaryScreen()));
-                // Navigate to the Transactions Screen
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TransactionScreen()));
               },
             ),
             const SizedBox(width: 48),  // The space for the floating action button
             IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                // Navigate to the Settings Screen
-              },
-            ),
-            IconButton(
               icon: const Icon(Icons.person),
               onPressed: () {
-                // Navigate to the Profile Screen
+                // Add action for person icon if needed
               },
             ),
           ],
@@ -99,6 +93,37 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-    
 
+  void _showThemeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Theme'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: const Text('Light Theme'),
+                onTap: () {
+                  _changeTheme(context, ThemeData.light());
+                },
+              ),
+              ListTile(
+                title: const Text('Dark Theme'),
+                onTap: () {
+                  _changeTheme(context, ThemeData.dark());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _changeTheme(BuildContext context, ThemeData theme) {
+    Provider.of<ThemeProvider>(context, listen: false).setTheme(theme);
+    Navigator.of(context).pop(); // Close the dialog after selection
+  }
+}
