@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rive/rive.dart'; // Import the Rive package
 import 'expense_provider.dart';
 import 'home_page.dart';
 
@@ -7,6 +8,7 @@ class Budgetsetter extends StatefulWidget {
   const Budgetsetter({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _BudgetsetterState createState() => _BudgetsetterState();
 }
 
@@ -19,7 +21,7 @@ class _BudgetsetterState extends State<Budgetsetter>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize AnimationController
     _controller = AnimationController(
       vsync: this,
@@ -54,7 +56,7 @@ class _BudgetsetterState extends State<Budgetsetter>
             },
           ),
         ],
-        backgroundColor: Colors.teal,  // Custom color for the AppBar
+        backgroundColor: Colors.teal, // Custom color for the AppBar
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -62,16 +64,22 @@ class _BudgetsetterState extends State<Budgetsetter>
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Set your Monthly Budget',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.teal,
-                    fontWeight: FontWeight.bold,
-                  ),
+            // Animated Wallet (Rive)
+            const Center(
+              child: SizedBox(
+                height: 150, // Set the size for the animation
+                width: 150,
+                child: RiveAnimation.asset(
+                  'assets/images/frankenstack.riv', // Path to your .riv file
+                  fit: BoxFit.cover, // Adjust the fit
+                  animations: ['idle'], // Define the animation (idle, etc.)
+                ),
+              ),
             ),
-            const SizedBox(height: 20),
             
-            // AnimatedBuilder to animate the jumping icon
+            const SizedBox(height: 20),
+
+            // AnimatedBuilder to animate the jumping money icon
             Center(
               child: AnimatedBuilder(
                 animation: _animation,
@@ -88,7 +96,16 @@ class _BudgetsetterState extends State<Budgetsetter>
                 ),
               ),
             ),
+            
+            const SizedBox(height: 20),
 
+            Text(
+              'Set your Monthly Budget',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.teal,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
             const SizedBox(height: 20),
             
             TextField(
@@ -112,11 +129,11 @@ class _BudgetsetterState extends State<Budgetsetter>
               ),
             ),
             const SizedBox(height: 20),
-            
+
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,  // Button background color
+                  backgroundColor: Colors.teal, // Button background color
                   padding: const EdgeInsets.symmetric(
                       horizontal: 40.0, vertical: 15.0),
                   textStyle: const TextStyle(

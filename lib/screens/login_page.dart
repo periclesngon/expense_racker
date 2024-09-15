@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+
   Future<User?> signInWithGoogle() async {
     final GoogleSignIn googleSignIn = GoogleSignIn();
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();

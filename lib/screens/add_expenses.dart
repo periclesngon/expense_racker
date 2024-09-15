@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class AddExpenseScreen extends StatefulWidget {
+  const AddExpenseScreen({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
 
@@ -109,7 +112,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green), // Enhanced UI: Button color
                     onPressed: _submitForm,
-                    child: const Text("Add Expense", style: const TextStyle(fontSize: 16)),
+                    child: const Text("Add Expense", style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ],

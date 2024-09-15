@@ -59,11 +59,11 @@ Map<String, double> calculateDailyExpenses() {
 
   // Get bar groups for weekly bar chart
 List<BarChartGroupData> getWeeklyBarGroups() {
-  Map<String, double> dailyExpenses = calculateDailyExpenses();
+  Map<String,double> dailyExpenses = calculateDailyExpenses();
   
-  return dailyExpenses.keys.toList().asMap().entries.map((entry) {
+  return dailyExpenses.entries.toList().asMap().entries.map((entry) {
     int idx = entry.key;
-    double total = entry.value as double;  // Already a double value
+    double total = 7.0;  // Already a double value
 
     return BarChartGroupData(
       x: idx,
@@ -79,7 +79,7 @@ List<BarChartGroupData> getWeeklyBarGroups() {
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
     // Reset weeklyExpenses to 0 for each day
-    List<double> _weeklyExpenses = List<double>.filled(7, 0.0);
+    List<double> weeklyExpenses = List<double>.filled(7, 0.0);
 
     for (var expense in _expenses) {
       if (expense.date.isAfter(startOfWeek) || (expense.date.year == startOfWeek.year &&
@@ -89,7 +89,7 @@ List<BarChartGroupData> getWeeklyBarGroups() {
         int dayDifference = expense.date.difference(startOfWeek).inDays;
 
         if (dayDifference >= 0 && dayDifference < 7) {
-          _weeklyExpenses[dayDifference] += expense.amount;
+          weeklyExpenses[dayDifference] += expense.amount;
         }
       }
     }
