@@ -1,5 +1,7 @@
+import 'package:expence_app/screens/deposit_screen.dart';
 import 'package:expence_app/screens/expense.dart';
 import 'package:expence_app/screens/expense_provider.dart';
+import 'package:expence_app/screens/withdraw_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,7 +9,6 @@ class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
 
@@ -16,30 +17,46 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   String _title = '';
   double _amount = 0;
   String _category = 'Food';
+  String _type = '';
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      final budget = Provider.of<ExpenseProvider>(context, listen: false).monthlyBudget;
-      if (_amount > budget) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Budget Exceeded'),
-            content: Text('The amount entered exceeds your current budget of \$${budget.toStringAsFixed(2)}.'),
-            actions: [
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        );
+
+      final balanceSufficient = Provider.of<ExpenseProvider>(context, listen: false).withdraw(_amount);
+
+      if (balanceSufficient) {
+        try {
+          Provider.of<ExpenseProvider>(context, listen: false).addExpense(
+            Expense(
+              UniqueKey().toString(),
+              title: _title,
+              amount: _amount,
+              date: DateTime.now(),
+              category: _category,
+              type: _type,
+              id: '',
+            ),
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Expense added successfully')),
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => WithdrawScreen(amount: _amount,)),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
       } else {
-        Provider.of<ExpenseProvider>(context, listen: false).addExpense(
-          Expense(title: _title, amount: _amount, category: _category, date: DateTime.now(), id: ''),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DepositScreen()),
         );
-        Navigator.of(context).pop();
       }
     }
   }
@@ -49,9 +66,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Add Expense"),
-        backgroundColor: Colors.deepPurple, // Enhanced UI: Color change
+        backgroundColor: const Color.fromARGB(255, 104, 168, 112),
       ),
-      body: SingleChildScrollView( // For better handling of small screens
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -59,23 +76,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Expense Details', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), // Enhanced UI: Header
+                const Text('Expense Details', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    border: OutlineInputBorder(), // Enhanced UI: Bordered input
-                    prefixIcon: Icon(Icons.description), // Enhanced UI: Icon
-                  ),
+                _buildInputField(
+                  icon: Icons.description,
+                  label: 'Title',
                   onSaved: (value) => _title = value!,
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
-                    border: OutlineInputBorder(), // Enhanced UI: Bordered input
-                    prefixIcon: Icon(Icons.attach_money), // Enhanced UI: Icon
-                  ),
+                _buildInputField(
+                  icon: Icons.attach_money,
+                  label: 'Amount',
                   keyboardType: TextInputType.number,
                   onSaved: (value) => _amount = double.parse(value!),
                   validator: (value) {
@@ -86,21 +97,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                DropdownButtonFormField(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(), // Enhanced UI: Bordered dropdown
-                    prefixIcon: Icon(Icons.category), // Enhanced UI: Icon
-                  ),
+                _buildDropdownField(
+                  icon: Icons.category,
+                  label: 'Category',
                   value: _category,
                   items: [
                     'Food', 'Transport', 'Shopping', 'Utilities', 'Housing', 'Entertainment',
                     'Health', 'Travel', 'Education', 'Insurance', 'Personal Care', 'Clothing', 'Gifts'
-                  ].map((String category) {
-                    return DropdownMenuItem(
-                      value: category,
-                      child: Text(category),
-                    );
-                  }).toList(),
+                  ],
                   onChanged: (String? newValue) {
                     setState(() {
                       _category = newValue!;
@@ -110,7 +114,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 const SizedBox(height: 30),
                 Center(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green), // Enhanced UI: Button color
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     onPressed: _submitForm,
                     child: const Text("Add Expense", style: TextStyle(fontSize: 16)),
                   ),
@@ -119,6 +123,63 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required IconData icon,
+    required String label,
+    TextInputType? keyboardType,
+    required FormFieldSetter<String> onSaved,
+    FormFieldValidator<String>? validator,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextFormField(
+        decoration: InputDecoration(
+          labelText: label,
+          border: InputBorder.none,
+          prefixIcon: Icon(icon),
+        ),
+        keyboardType: keyboardType,
+        onSaved: onSaved,
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required IconData icon,
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: label,
+          border: InputBorder.none,
+          prefixIcon: Icon(icon),
+        ),
+        value: value,
+        items: items.map((String category) {
+          return DropdownMenuItem(
+            value: category,
+            child: Text(category),
+          );
+        }).toList(),
+        onChanged: onChanged,
       ),
     );
   }

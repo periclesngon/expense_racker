@@ -11,13 +11,17 @@ class TransactionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final expenseProvider = Provider.of<ExpenseProvider>(context);
     final weekExpenses = expenseProvider.calculateDailyExpenses();
-    final monthlyExpenses = expenseProvider.expenses
-        .where((expense) => expenseProvider.isThisWeek(expense.date))
-        .toList();
+
+    // Today's expenses
     final todayExpenses = expenseProvider.expenses
         .where((expense) =>
             DateFormat.yMd().format(expense.date) ==
             DateFormat.yMd().format(DateTime.now()))
+        .toList();
+
+    // Monthly expenses
+    final monthlyExpenses = expenseProvider.expenses
+        .where((expense) => expense.date.month == DateTime.now().month)
         .toList();
 
     return Scaffold(
