@@ -1,61 +1,85 @@
 import 'package:expence_app/screens/biometric.dart';
-import 'package:expence_app/screens/home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-  // The BiometricService class you provided
-  // Navigate to home after setup
+import 'secure_storage_service.dart';
+import 'home_page.dart';  // Assuming HomeScreen is the home page
+import 'package:firebase_auth/firebase_auth.dart';  // Firebase Auth import
 
 class BiometricPassword extends StatefulWidget {
+  const BiometricPassword({super.key});
+
   @override
   _BiometricEnrollmentScreenState createState() => _BiometricEnrollmentScreenState();
 }
 
 class _BiometricEnrollmentScreenState extends State<BiometricPassword> {
   final BiometricService _biometricService = BiometricService();
+  final SecureStorageService _secureStorageService = SecureStorageService();
   final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;  // Firebase Authentication instance
 
+  // Enroll biometrics (scan fingerprint)
   Future<void> _enrollBiometrics() async {
-    bool canEnroll = await _biometricService.isBiometricAvailable();
+    try {
+      bool canEnroll = await _biometricService.isBiometricAvailable();
 
-    if (canEnroll) {
-      bool enrolled = await _biometricService.authenticate();
+      if (canEnroll) {
+        bool enrolled = await _biometricService.authenticate();
 
-      if (enrolled) {
-        await _biometricService.setupBiometricsOrPassword(context);
-        _navigateToHome();
+        if (enrolled) {
+          User? user = _auth.currentUser;  // Fetch current authenticated user
+          if (user != null) {
+            await _biometricService.setupBiometricsOrPassword(user.uid);  // Save biometric enrollment in Firebase
+            _navigateToHome();
+          } else {
+            _showErrorSnackbar('User not authenticated');
+          }
+        } else {
+          _showErrorSnackbar('Biometric enrollment failed');
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric enrollment failed')),
-        );
+        _showErrorSnackbar('Biometrics not available on this device');
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Biometrics not available on this device')),
-      );
+    } catch (e) {
+      _showErrorSnackbar('Error during biometric setup: ${e.toString()}');
     }
   }
 
+  // Save password
   Future<void> _setPassword() async {
     final String password = _passwordController.text;
 
     if (password.isNotEmpty) {
-      // Here, you would typically store the password securely in Firebase (or securely on the device)
-      // Using a simple example to show you could store it in Firebase for now.
-      await _biometricService.storePassword(password);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password set successfully')),
-      );
-      _navigateToHome();
+      try {
+        User? user = _auth.currentUser;
+        if (user != null) {
+          // Store password securely in Firebase or local storage
+          await _secureStorageService.storePassword(password);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password set successfully')),
+          );
+          _navigateToHome();
+        } else {
+          _showErrorSnackbar('User not authenticated');
+        }
+      } catch (e) {
+        _showErrorSnackbar('Error during password setup: ${e.toString()}');
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid password')),
-      );
+      _showErrorSnackbar('Please enter a valid password');
     }
   }
 
+  // Error handling - show error snackbar
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Navigate to HomeScreen
   void _navigateToHome() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const HomeScreen()),  // Navigate to HomeScreen
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
   }
 
@@ -86,15 +110,6 @@ class _BiometricEnrollmentScreenState extends State<BiometricPassword> {
             ElevatedButton(
               onPressed: _setPassword,
               child: const Text('Set up Password instead'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const HomeScreen()),  // Skip setup
-                );
-              },
-              child: const Text(''),
             ),
           ],
         ),

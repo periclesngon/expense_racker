@@ -17,7 +17,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   String _title = '';
   double _amount = 0;
   String _category = 'Food';
-  String _type = '';
+  final String _type = '';
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {

@@ -1,12 +1,13 @@
 import 'package:expence_app/screens/transaction.dart';
+import 'package:expence_app/screens/user_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'expense_provider.dart';
 import 'add_expenses.dart';
-import 'deposit_screen.dart' ; 
+import 'deposit_screen.dart'; 
 import 'expenses_graph_widget.dart';
 import 'theme_provider.dart';
-
+ // Import the profile page you want to navigate to
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,6 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Navigate to the profile page
+  void _navigateToProfile(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) =>  const UserProfile()), // Replace with your profile page
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final expenseProvider = Provider.of<ExpenseProvider>(context);
@@ -61,6 +69,19 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.blue,
           ),
         ),
+        actions: [
+          // Profile Icon in a Green Circle
+          IconButton(
+            icon: const CircleAvatar(
+              backgroundColor: Colors.green, // Green circle
+              child: Icon(
+                Icons.person, // Profile icon
+                color: Colors.white, // Icon color
+              ),
+            ),
+            onPressed: () => _navigateToProfile(context), // Navigate on press
+          ),
+        ],
       ),
       body: Stack(
         children: [

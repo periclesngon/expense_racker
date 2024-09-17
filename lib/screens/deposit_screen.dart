@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'expense_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:local_auth/local_auth.dart'; // Add this for biometric authentication
+ // Add this for biometric authentication
  // Make sure ExpenseProvider is imported
 
 class DepositScreen extends StatefulWidget {
@@ -80,7 +80,7 @@ class _DepositScreenState extends State<DepositScreen> {
               TextField(
                 controller: _emailController,
                 readOnly: true,
-                decoration: InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: 'Email'),
               ),
               const SizedBox(height: 20),
               TextField(

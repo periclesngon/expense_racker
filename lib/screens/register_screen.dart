@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For saving user data
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
   _RegisterPageState createState() => _RegisterPageState();
 }
@@ -48,7 +50,7 @@ class _RegisterPageState extends State<RegisterScreen> {
 
           // Navigate to Home Screen after successful registration
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => BiometricPassword()),
+            MaterialPageRoute(builder: (context) => const BiometricPassword()),
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -196,7 +198,6 @@ class _RegisterPageState extends State<RegisterScreen> {
               // Register Button
               ElevatedButton(
                 onPressed: _submitForm,
-                child: const Text('Register'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue, // Button color
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -204,6 +205,7 @@ class _RegisterPageState extends State<RegisterScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
+                child: const Text('Register'),
               ),
             ],
           ),

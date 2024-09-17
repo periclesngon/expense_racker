@@ -2,56 +2,86 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';  // Firestore import
 
 class BiometricService {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;  // Firestore instance
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
 
+  // Check if biometrics are available
   Future<bool> isBiometricAvailable() async {
-    return await _localAuth.canCheckBiometrics;
+    try {
+      bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      bool isDeviceSupported = await _localAuth.isDeviceSupported();
+      return canCheckBiometrics && isDeviceSupported;
+    } catch (e) {
+      print('Failed to check biometrics availability: $e');
+      return false; // Return false if there is a failure in checking availability
+    }
   }
 
+  // Authenticate the user with biometrics
   Future<bool> authenticate() async {
     try {
-      return await _localAuth.authenticate(
-        localizedReason: 'Please authenticate to proceed',
-        options: const AuthenticationOptions(biometricOnly: true),
+      var authenticate = _localAuth.authenticate(
+        localizedReason: 'Please authenticate to continue',
+         options: const AuthenticationOptions(biometricOnly: true,
+           stickyAuth: true,  // Keeps the authentication session active
+          useErrorDialogs: true,)
+        // Automatically handle errors by showing dialogs to the user
       );
+      return await authenticate;
     } catch (e) {
+      print('Error during biometric authentication: $e');
+      
       return false;
     }
   }
 
-  Future<void> setupBiometricsOrPassword(BuildContext context) async {
-    bool canAuthenticateWithBiometrics = await isBiometricAvailable();
-    if (canAuthenticateWithBiometrics) {
-      bool didAuthenticate = await authenticate();
-      if (didAuthenticate) {
-        await _storeBiometricEnrollment(true);
-      } else {
-        // Handle failure or fallback to password setup
-        _showPasswordSetupDialog(context, 'Biometric authentication failed. Would you like to set up a password instead?');
-      }
-    } else {
-      // Prompt user to set up a password instead
-      _showPasswordSetupDialog(context, 'Biometrics not available. Please set up a password.');
+  // Save biometric status to Firebase
+  Future<void> setupBiometricsOrPassword(String userId) async {
+    try {
+      // Save biometric enrollment status to Firestore
+      await _firestore.collection('users').doc(userId).set({
+        'biometric_enrolled': true,
+        'enrollment_date': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)); // Merge to avoid overwriting
+      print('Biometric enrollment status saved successfully.');
+    } catch (e) {
+      print('Error saving biometric status: $e');
+      throw Exception('Failed to save biometric status');
     }
   }
 
-  Future<void> _storeBiometricEnrollment(bool enrolled) async {
-    String? userId = _auth.currentUser?.uid;
-    if (userId != null) {
-      await _dbRef.child('users/$userId/biometrics').set(enrolled);
+  // Store password securely in Firebase (e.g., hashed)
+  Future<void> storePasswordInFirebase(String userId, String password) async {
+    try {
+      // Store password in Firestore
+      await _firestore.collection('users').doc(userId).set({
+        'password': password, // In real production, never store raw passwords, hash them
+        'password_setup_date': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      print('Password stored in Firebase successfully.');
+    } catch (e) {
+      print('Error saving password to Firebase: $e');
+      throw Exception('Failed to store password in Firebase');
     }
   }
 
-  // Store password securely in Firebase Database or other secure storage
+  // Define the method to store password locally
   Future<void> storePassword(String password) async {
-    String? userId = _auth.currentUser?.uid;
-    if (userId != null) {
-      // Hash the password or store securely (e.g., using Firebase or secure storage)
-      await _dbRef.child('users/$userId/password').set(password);  // DO NOT store plain text in a real app
+    try {
+      // Example: Save password locally using Firebase Realtime Database (or secure storage)
+      User? user = _auth.currentUser;
+      if (user != null) {
+        await _dbRef.child('users/${user.uid}/password').set(password);
+        print('Password stored locally.');
+      }
+    } catch (e) {
+      print('Error storing password: $e');
+      throw Exception('Failed to store password');
     }
   }
 
@@ -63,7 +93,7 @@ class BiometricService {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Password Setup'),
+          title: const Text('Password Setup'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

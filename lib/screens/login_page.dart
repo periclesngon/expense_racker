@@ -1,5 +1,5 @@
 import 'package:expence_app/screens/biometric_password.dart';
-import 'package:expence_app/screens/home_page.dart'; // Import Home Screen
+// Import Home Screen
 import 'package:expence_app/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Navigate to Home Screen
   void _navigateToHomePage() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => BiometricPassword()), // Replace HomeScreen with your actual home page
+      MaterialPageRoute(builder: (context) => const BiometricPassword()), // Replace HomeScreen with your actual home page
     );
   }
 
@@ -154,10 +154,10 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FloatingActionButton(
-                  onPressed: signInWithGoogle,
-                  child: Image.asset('assets/images/search.png'), // Google logo asset
+                  onPressed: signInWithGoogle, // Google logo asset
                   backgroundColor: Colors.white,
                   elevation: 1,
+                  child: Image.asset('assets/images/search.png'),
                 ),
               ],
             ),
@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: () {
                 // Navigate to the register screen
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => BiometricPassword()));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) =>const RegisterScreen()));
               },
               child: const Text('Don\'t have an account? Register'),
             ),
