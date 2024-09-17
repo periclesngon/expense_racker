@@ -1,4 +1,7 @@
+import 'package:expence_app/screens/biometric_password.dart'; // Import Home Screen
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // For saving user data
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -15,15 +18,43 @@ class _RegisterPageState extends State<RegisterScreen> {
   bool _isObscurePassword = true;
   bool _isObscureConfirmPassword = true;
 
-  void _submitForm() {
+  // Register the user in Firebase
+  Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
 
       if (_password == _confirmPassword) {
-        // You can implement the registration logic here
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration Successful!')),
-        );
+        try {
+          // Create user with email and password in Firebase Authentication
+          UserCredential userCredential = await FirebaseAuth.instance
+              .createUserWithEmailAndPassword(
+            email: _email!,
+            password: _password!,
+          );
+
+          // Save user data to Firestore
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user?.uid)
+              .set({
+            'username': _username,
+            'email': _email,
+          });
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration Successful!')),
+          );
+
+          // Navigate to Home Screen after successful registration
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => BiometricPassword()),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Registration failed: ${e.toString()}')),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Passwords do not match')),
@@ -42,6 +73,7 @@ class _RegisterPageState extends State<RegisterScreen> {
             Navigator.pop(context);
           },
         ),
+        title: const Text("Register"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -51,10 +83,10 @@ class _RegisterPageState extends State<RegisterScreen> {
             children: [
               // Avatar Placeholder
               const CircleAvatar(
-                radius: 40,
-                backgroundImage: AssetImage('assets/avatar.png'), // Replace with actual image
+                radius: 70,
+                backgroundImage: AssetImage('assets/images/popo.jpg'), // Replace with actual image
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 100),
 
               // Username Field
               TextFormField(
@@ -134,7 +166,7 @@ class _RegisterPageState extends State<RegisterScreen> {
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
-                  hintText: 'Enter confirm password',
+                  hintText: 'Re-enter your password',
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isObscureConfirmPassword
@@ -152,9 +184,6 @@ class _RegisterPageState extends State<RegisterScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please confirm your password';
-                  }
-                  if (value != _password) {
-                    return 'Passwords do not match';
                   }
                   return null;
                 },

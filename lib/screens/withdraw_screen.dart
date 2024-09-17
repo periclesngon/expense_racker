@@ -27,13 +27,13 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
   Future<void> _authenticate() async {
     try {
-      final isAuthenticated = await _auth.authenticate(
+      bool isAuthenticated = await _auth.authenticate(
         localizedReason: 'Please authenticate to proceed with the withdrawal.',
         options: const AuthenticationOptions(biometricOnly: true),
       );
 
       if (isAuthenticated) {
-        _processWithdrawal();
+        _processWithdrawal(); // Proceed with the withdrawal after authentication
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Authentication failed')),
@@ -136,7 +136,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              onPressed: _authenticate,
+              onPressed: _authenticate, // Trigger authentication before proceeding with withdrawal
               child: const Text('Confirm Withdrawal', style: TextStyle(fontSize: 18)),
             ),
           ],

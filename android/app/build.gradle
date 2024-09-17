@@ -1,7 +1,10 @@
 plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
+    apply plugin: 'com.android.application'
+    apply plugin: 'kotlin-android'
+    apply plugin: 'dev.flutter.flutter-gradle-plugin'
+    apply plugin: 'com.google.gms.google-services'
+    apply plugin: 'com.android.application'
+    apply from :"$flutterRoot/packages/flutter_tools/gardle/flutter.gradle"
 }
 
 def localProperties = new Properties()
@@ -65,4 +68,7 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
+    implementation("com.google.firebase:firebase-analytics")
+}

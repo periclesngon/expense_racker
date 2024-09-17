@@ -1,7 +1,11 @@
+import 'package:expence_app/screens/biometric.dart';
 import 'package:expence_app/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'expense_provider.dart'; // Make sure ExpenseProvider is imported
+import 'expense_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:local_auth/local_auth.dart'; // Add this for biometric authentication
+ // Make sure ExpenseProvider is imported
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
@@ -13,18 +17,20 @@ class DepositScreen extends StatefulWidget {
 class _DepositScreenState extends State<DepositScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  String reference = '';
+  final BiometricService _biometricService = BiometricService();  // Use BiometricService here
+
+  String? userEmail;
 
   @override
   void initState() {
     super.initState();
-    reference = "TX-${DateTime.now().millisecondsSinceEpoch}";
+    userEmail = FirebaseAuth.instance.currentUser?.email;
+    _emailController.text = userEmail ?? "";
   }
 
-  Future<void> _simulatePayment(String amount, String email) async {
+  Future<void> _simulatePayment(String amount) async {
     try {
       await Future.delayed(const Duration(seconds: 2));
-
       _showPaymentSuccessScreen(context, amount);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,7 +42,7 @@ class _DepositScreenState extends State<DepositScreen> {
   void _showPaymentSuccessScreen(BuildContext context, String amount) {
     final double depositAmount = double.tryParse(amount) ?? 0;
     if (depositAmount > 0) {
-      context.read<ExpenseProvider>().deposit(depositAmount);  // Use context.read here
+      context.read<ExpenseProvider>().deposit(depositAmount);
     }
 
     Navigator.of(context).push(
@@ -46,6 +52,15 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _biometricCheck(BuildContext context) async {
+    bool authenticated = await _biometricService.authenticate();  // Use authenticate from BiometricService
+
+    if (authenticated) {
+      final amount = _amountController.text;
+      _simulatePayment(amount);
+    }
   }
 
   @override
@@ -62,13 +77,12 @@ class _DepositScreenState extends State<DepositScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const SizedBox(height: 20),
-              const Text(
-                'Enter Amount and Email',
-                style: TextStyle(fontSize: 24, color: Color.fromARGB(255, 14, 14, 14)),
-                textAlign: TextAlign.center,
+              TextField(
+                controller: _emailController,
+                readOnly: true,
+                decoration: InputDecoration(labelText: 'Email'),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
@@ -83,21 +97,6 @@ class _DepositScreenState extends State<DepositScreen> {
                 ),
                 style: const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
               ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: const TextStyle(color: Color.fromARGB(255, 6, 6, 6)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                style: const TextStyle(color: Colors.black),
-              ),
               const SizedBox(height: 40),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -109,15 +108,12 @@ class _DepositScreenState extends State<DepositScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () {
-                  final amount = _amountController.text;
-                  final email = _emailController.text;
-
-                  if (amount.isEmpty || email.isEmpty) {
+                  if (_amountController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter a valid amount and email')),
+                      const SnackBar(content: Text('Please enter a valid amount')),
                     );
                   } else {
-                    _simulatePayment(amount, email);
+                    _biometricCheck(context);
                   }
                 },
                 child: const Text('Confirm Deposit', style: TextStyle(fontSize: 18)),
@@ -129,6 +125,8 @@ class _DepositScreenState extends State<DepositScreen> {
     );
   }
 }
+
+
 
 
 // Payment Success Screen

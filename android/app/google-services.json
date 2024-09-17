@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1029305283942",
+    "project_id": "ztheexpense",
+    "storage_bucket": "ztheexpense.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1029305283942:android:35bdd956c8b7c6344684a7",
+        "android_client_info": {
+          "package_name": "com.example.expence_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC288wK3r6M5WyYQLVU9flCjBmbU95noK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

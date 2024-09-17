@@ -1,10 +1,9 @@
-// ignore_for_file: prefer_const_constructors
-
+import 'package:expence_app/screens/biometric_password.dart';
+import 'package:expence_app/screens/home_page.dart'; // Import Home Screen
 import 'package:expence_app/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -17,35 +16,67 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  Future<User?> signInWithGoogle() async {
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-    if (googleUser == null) return null;
+  // Sign in with Google
+  Future<void> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return; // User canceled the login
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final OAuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-    return FirebaseAuth.instance.signInWithCredential(credential).then((userCredential) => userCredential.user);
+      // Firebase authentication using the Google credentials
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      // Navigate to HomeScreen after successful sign-in
+      _navigateToHomePage();
+    } catch (e) {
+      _showErrorSnackbar('Google Sign-In failed. Try again.');
+    }
   }
 
-  Future<User?> signInWithApple() async {
-    final appleCredential = await SignInWithApple.getAppleIDCredential(
-      scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
-    );
+  // Sign in with email and password
+  Future<void> _login() async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
 
-    final oauthCredential = OAuthProvider("apple.com").credential(
-      idToken: appleCredential.identityToken,
-      accessToken: appleCredential.authorizationCode,
-    );
-
-    return FirebaseAuth.instance.signInWithCredential(oauthCredential).then((userCredential) => userCredential.user);
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      _navigateToHomePage(); // Navigate to Home on successful login
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        if (e.code == 'user-not-found') {
+          _showErrorSnackbar('No user found with this email. Please sign up.');
+        } else if (e.code == 'wrong-password') {
+          _showErrorSnackbar('Incorrect password. Try again.');
+        } else {
+          _showErrorSnackbar('Login failed. Try again.');
+        }
+      } else {
+        _showErrorSnackbar('An error occurred. Try again.');
+      }
+    }
   }
 
-  void _login() {
-    print('Email: ${_emailController.text}, Password: ${_passwordController.text}');
+  // Helper method to show error snackbar
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Navigate to Home Screen
+  void _navigateToHomePage() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => BiometricPassword()), // Replace HomeScreen with your actual home page
+    );
   }
 
   @override
@@ -93,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  // Implement functionality for forgot password
+                  // Implement forgot password functionality
                 },
                 child: const Text('Forgot Password?'),
               ),
@@ -107,8 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
               child: const Text('Login'),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: const <Widget>[
+            const Row(
+              children: <Widget>[
                 Expanded(child: Divider(thickness: 2)),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -118,18 +149,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             const SizedBox(height: 16),
+            // Center the Google Sign-In button
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FloatingActionButton(
                   onPressed: signInWithGoogle,
                   child: Image.asset('assets/images/search.png'), // Google logo asset
-                  backgroundColor: Colors.white,
-                  elevation: 1,
-                ),
-                FloatingActionButton(
-                  onPressed: signInWithApple,
-                  child: Image.asset('assets/images/apple.png'), // Apple logo asset
                   backgroundColor: Colors.white,
                   elevation: 1,
                 ),
@@ -139,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: () {
                 // Navigate to the register screen
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RegisterScreen())); // Ensure you have set the route for login page // Ensure you have set the route for register page
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => BiometricPassword()));
               },
               child: const Text('Don\'t have an account? Register'),
             ),

@@ -1,17 +1,28 @@
 // main.dart
 // ignore_for_file: unused_import
 
-import 'package:expence_app/screens/budget_screen.dart';
+
 import 'package:expence_app/screens/home_page.dart';
 import 'package:expence_app/screens/login_page.dart';
 import 'package:expence_app/screens/theme_provider.dart';
 import 'package:expence_app/screens/welcome_page.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/expense_provider.dart'; // Path to your provider
 // Path to your home screen
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+      apiKey:"AIzaSyC288wK3r6M5WyYQLVU9flCjBmbU95noK0", 
+    appId: "1:1029305283942:android:35bdd956c8b7c6344684a7",
+     messagingSenderId: "1029305283942",
+      projectId: "ztheexpense")
+  
+  );
   runApp(
 
       const MyApp(),
