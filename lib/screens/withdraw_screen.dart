@@ -1,50 +1,142 @@
+import 'package:expence_app/screens/biometric.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:expence_app/screens/expense_provider.dart'; // Ensure this import is correct
 import 'package:expence_app/screens/home_page.dart'; // Ensure this import is correct
+ // Import the biometric service
 
 class WithdrawScreen extends StatefulWidget {
-  const WithdrawScreen({super.key, required this.amount});
+  const WithdrawScreen({
+    super.key, 
+    required this.amount, 
+    required this.onWithdrawConfirmed, // Ensure this is initialized
+    required this.category,            // Ensure this is initialized
+  });
 
-  final double amount; // Add this parameter
+  final double amount;
+  final String category; // Final variable initialized
+  final void Function() onWithdrawConfirmed; // Final variable initialized
 
   @override
   _WithdrawScreenState createState() => _WithdrawScreenState();
 }
 
+
 class _WithdrawScreenState extends State<WithdrawScreen> {
   final _amountController = TextEditingController();
   final _categoryController = TextEditingController();
+  final BiometricService _biometricService = BiometricService();
   final LocalAuthentication _auth = LocalAuthentication();
+  bool _isBiometricAvailable = false;
+  List<String> _categories = []; // List to store categories
+  String _selectedCategory = ''; // Selected category
 
   @override
   void initState() {
     super.initState();
-    // Set the amount in the controller
     _amountController.text = widget.amount.toString();
+    _checkBiometricAvailability(); // Check for biometrics on init
+    _selectedCategory = widget.category;
+     _fetchCategories(); // Fetch categories on init
+
+  }
+
+  Future<void> _fetchCategories() async {
+    // Simulating a fetch request for categories. In a real app, you'd fetch from a service or database.
+    List<String> fetchedCategories = ['Food', 'Transport', 'Shopping', 'Bills', 'Other'];
+
+    setState(() {
+      _categories = fetchedCategories;
+      // Default to the passed category or the first in the list
+      if (!_categories.contains(_selectedCategory)) {
+        _selectedCategory = _categories.isNotEmpty ? _categories[0] : '';
+      }
+    });
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    bool isAvailable = await _biometricService.isBiometricAvailable();
+    setState(() {
+      _isBiometricAvailable = isAvailable;
+    });
   }
 
   Future<void> _authenticate() async {
-    try {
-      bool isAuthenticated = await _auth.authenticate(
-        localizedReason: 'Please authenticate to proceed with the withdrawal.',
-        options: const AuthenticationOptions(biometricOnly: true),
-      );
-
+    if (_isBiometricAvailable) {
+      bool isAuthenticated = await _biometricService.authenticate();
       if (isAuthenticated) {
-        _processWithdrawal(); // Proceed with the withdrawal after authentication
+        _processWithdrawal();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication failed')),
+          const SnackBar(content: Text('Biometric authentication failed')),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+    } else {
+      _showPasswordConfirmationDialog(); // Show password dialog if biometrics are not available
     }
   }
+    Future<bool> _validatePassword(String enteredPassword) async {
+    // Fetch the user's stored password from Firebase or other secure storage
+    try {
+      bool isValid = await _biometricService.validatePassword(enteredPassword);
+    return isValid;
+    } catch (e) {
+      print('Password validation failed: $e');
+      return false;
+    }
+  }
+
+  void _showPasswordConfirmationDialog() {
+    final TextEditingController passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Password Confirmation'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Please enter your password to confirm the withdrawal.'),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Confirm'),
+              onPressed: () async {
+                String enteredPassword = passwordController.text;
+                if (await _validatePassword(enteredPassword)) {
+                  Navigator.of(context).pop(); // Close the dialog if the password is correct
+                  _processWithdrawal(); // Proceed with withdrawal
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid password')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 
   void _processWithdrawal() {
     final amount = double.tryParse(_amountController.text);
@@ -99,12 +191,12 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            Row( // Use Row to align the containers horizontally
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Ensure even spacing
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0), // Padding between the containers
+                    padding: const EdgeInsets.only(right: 8.0),
                     child: _buildSummaryContainer(
                       label: 'Amount to Withdraw',
                       value: widget.amount.toStringAsFixed(2),
@@ -115,7 +207,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0), // Padding between the containers
+                    padding: const EdgeInsets.only(left: 8.0),
                     child: _buildSummaryContainer(
                       label: 'Category',
                       value: _categoryController.text.isEmpty ? 'No category' : _categoryController.text,
@@ -152,7 +244,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     required Color color,
   }) {
     return AspectRatio(
-      aspectRatio: 1, // Ensure the container is square
+      aspectRatio: 1,
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
@@ -182,7 +274,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 }
-
 // Payment Success Screen
 class PaymentSuccess extends StatelessWidget {
   const PaymentSuccess({super.key, required this.message});

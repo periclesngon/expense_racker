@@ -26,38 +26,49 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       final balanceSufficient = Provider.of<ExpenseProvider>(context, listen: false).withdraw(_amount);
 
       if (balanceSufficient) {
-        try {
-          Provider.of<ExpenseProvider>(context, listen: false).addExpense(
-            Expense(
-              UniqueKey().toString(),
-              title: _title,
+        // Navigate to WithdrawScreen and pass a callback to add the expense
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WithdrawScreen(
               amount: _amount,
-              date: DateTime.now(),
               category: _category,
-              type: _type,
-              id: '',
+              onWithdrawConfirmed: () => _addExpense(), // Call this when withdrawal is confirmed
             ),
-          );
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Expense added successfully')),
-          );
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => WithdrawScreen(amount: _amount,)),
-          );
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
-          );
-        }
+          ),
+        );
       } else {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const DepositScreen()),
         );
       }
+    }
+  }
+
+  void _addExpense() {
+    try {
+      Provider.of<ExpenseProvider>(context, listen: false).addExpense(
+        Expense(
+          UniqueKey().toString(),
+          title: _title,
+          amount: _amount,
+          date: DateTime.now(),
+          category: _category,
+          type: _type,
+          id: '',
+        ),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Expense added successfully')),
+      );
+
+      Navigator.pop(context);  // Return to the previous screen after success
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     }
   }
 

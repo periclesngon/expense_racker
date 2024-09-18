@@ -61,28 +61,30 @@ class _HomeScreenState extends State<HomeScreen> {
     final balance = expenseProvider.income - expenseProvider.spent; // Calculate the balance
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'zTHeWAY',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
+    appBar: AppBar(
+  title: const Text(
+    'zTHeTRAck',
+    style: TextStyle(
+      fontWeight: FontWeight.bold,
+      color: Colors.blue,
+    ),
+  ),
+  actions: [
+    // Profile Icon in a Green Circle
+    IconButton(
+      icon: const CircleAvatar(
+        backgroundColor: Colors.green, // Green circle
+        child: Icon(
+          Icons.person, // Profile icon
+          color: Colors.white, // Icon color
         ),
-        actions: [
-          // Profile Icon in a Green Circle
-          IconButton(
-            icon: const CircleAvatar(
-              backgroundColor: Colors.green, // Green circle
-              child: Icon(
-                Icons.person, // Profile icon
-                color: Colors.white, // Icon color
-              ),
-            ),
-            onPressed: () => _navigateToProfile(context), // Navigate on press
-          ),
-        ],
       ),
+      onPressed: () => _navigateToProfile(context), // Navigate on press
+    ),
+  ],
+  automaticallyImplyLeading: false, // This removes the back button
+),
+
       body: Stack(
         children: [
           SingleChildScrollView(

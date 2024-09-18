@@ -1,4 +1,5 @@
 import 'package:expence_app/screens/biometric_password.dart';
+import 'package:expence_app/screens/forgot_password.dart';
 // Import Home Screen
 import 'package:expence_app/screens/register_screen.dart';
 import 'package:flutter/material.dart';
@@ -124,9 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => ForgotPasswordScreen()));
                   // Implement forgot password functionality
                 },
                 child: const Text('Forgot Password?'),
+                
               ),
             ),
             const SizedBox(height: 16),

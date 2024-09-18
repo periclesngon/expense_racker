@@ -1,11 +1,10 @@
 import 'package:expence_app/screens/biometric.dart';
-import 'package:expence_app/screens/home_page.dart';
+import 'package:expence_app/screens/withdraw_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'expense_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
- // Add this for biometric authentication
- // Make sure ExpenseProvider is imported
+import 'biometric_password.dart'; // Import the new screen for password input
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
@@ -17,7 +16,7 @@ class DepositScreen extends StatefulWidget {
 class _DepositScreenState extends State<DepositScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final BiometricService _biometricService = BiometricService();  // Use BiometricService here
+  final BiometricService _biometricService = BiometricService();  
 
   String? userEmail;
 
@@ -55,12 +54,83 @@ class _DepositScreenState extends State<DepositScreen> {
   }
 
   Future<void> _biometricCheck(BuildContext context) async {
-    bool authenticated = await _biometricService.authenticate();  // Use authenticate from BiometricService
+    bool canCheckBiometrics = await _biometricService.isBiometricAvailable();
 
-    if (authenticated) {
-      final amount = _amountController.text;
-      _simulatePayment(amount);
+    if (canCheckBiometrics) {
+      bool authenticated = await _biometricService.authenticate();
+      if (authenticated) {
+        final amount = _amountController.text;
+        _simulatePayment(amount);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Biometric authentication failed')),
+        );
+      }
+    } else {
+      _showPasswordDialog(context);
     }
+  }
+
+  void _showPasswordDialog(BuildContext context) {
+    final TextEditingController passwordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Password Authentication'),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Enter your password',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();  // Close the dialog
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Submit'),
+              onPressed: () async {
+                final String password = passwordController.text;
+                if (password.isNotEmpty) {
+                  bool authenticated = await _verifyPassword(password);
+                  if (authenticated) {
+                    Navigator.of(context).pop();  // Close the dialog
+                    final amount = _amountController.text;
+                    _simulatePayment(amount);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Invalid password')),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a valid password')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> _verifyPassword(String password) async {
+    // Implement your password verification logic here
+    // For demonstration, we assume the password is always correct
+    // Replace with actual verification logic
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Verify password with your secure storage or Firebase logic
+      return true;  // This should be the result of actual password verification
+    }
+    return false;
   }
 
   @override
@@ -118,70 +188,6 @@ class _DepositScreenState extends State<DepositScreen> {
                 },
                 child: const Text('Confirm Deposit', style: TextStyle(fontSize: 18)),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-// Payment Success Screen
-class PaymentSuccess extends StatelessWidget {
-  const PaymentSuccess({super.key, required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-              Image.network(
-                "https://res.cloudinary.com/iamvictorsam/image/upload/v1671834054/Capture_inlcff.png",
-                height: MediaQuery.of(context).size.height * 0.4, // 40%
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.08),
-              Text(message,
-                  style: const TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  )),
-              const Spacer(),
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: ElevatedButton(
-                  onPressed: () {
-                   Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const HomeScreen())
-      );
- // Go back to the previous screen
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.teal,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 5.0,
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(15.0),
-                    child: Text(
-                      'Back to Home Screen',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-              ),
-              const Spacer(),
             ],
           ),
         ),

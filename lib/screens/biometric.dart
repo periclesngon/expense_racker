@@ -69,6 +69,32 @@ class BiometricService {
       throw Exception('Failed to store password in Firebase');
     }
   }
+  // Validate the entered password against the stored password in Firebase
+  Future<bool> validatePassword(String enteredPassword) async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch the stored password from Firestore or Realtime Database
+      final DocumentSnapshot<Map<String, dynamic>> userDoc = 
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        // Retrieve the stored password (in real use, it should be hashed)
+        String storedPassword = userDoc.data()?['password'] ?? '';
+
+        // Compare the entered password with the stored one
+        if (storedPassword == enteredPassword) {
+          return true;  // Password matches
+        }
+      }
+    }
+    return false;  // Password doesn't match
+  } catch (e) {
+    print('Error verifying password: $e');
+    return false;
+  }
+}
+
 
   // Define the method to store password locally
   Future<void> storePassword(String password) async {
